@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>Leigh Steinberg Celebrity Charity Poker Tournament</title>
 <meta name="description" content="Sponsorship deck. Super Bowl Saturday, February 13, 2027, The Ebell of Los Angeles.">
 <style>
@@ -34,17 +35,19 @@
   <div class="kick time">1 to 6 PM</div>
   <h1>The Leigh Steinberg Celebrity Charity Poker Tournament</h1>
   <div class="meta">Saturday, February 13, 2027<br>The Ebell of Los Angeles</div>
-  <a class="dl" href="Leigh-Steinberg-Celebrity-Charity-Poker-Tournament-Sponsor-Deck.pdf">Download the PDF</a>
+  <a class="dl" id="dl" href="Leigh-Steinberg-Celebrity-Charity-Poker-Tournament-Sponsor-Deck.pdf">Download the PDF</a>
 </header>
 <main id="deck"></main>
+<script>document.getElementById('dl').href+='?v='+(''+Date.now()).slice(0,-6);</script>
 <footer>Scroll for all 23 pages. Tap any page to open it full size.</footer>
 <script>
+  var V='25-'+Date.now().toString().slice(0,-6);   // cache-buster, bumped each deploy
   var m=document.getElementById('deck');
   for(var i=1;i<=23;i++){
     var n=(i<10?'0':'')+i, f=document.createElement('figure'), a=document.createElement('a'), g=document.createElement('img');
-    g.src='slides/'+n+'.jpg'; g.alt='Page '+i; g.width=1440; g.height=810;
+    g.src='slides/'+n+'.jpg?v='+V; g.alt='Page '+i; g.width=1440; g.height=810;
     g.loading = (i<=2 ? 'eager' : 'lazy'); g.decoding='async';
-    a.href='slides/'+n+'.jpg'; a.appendChild(g); f.appendChild(a); m.appendChild(f);
+    a.href='slides/'+n+'.jpg?v='+V; a.appendChild(g); f.appendChild(a); m.appendChild(f);
   }
 </script>
 </body>
