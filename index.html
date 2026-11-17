@@ -41,20 +41,56 @@
 <script>document.getElementById('dl').href+='?v='+(''+Date.now()).slice(0,-6);</script>
 <footer>Scroll for the full deck. Tap any page to open it full size.</footer>
 <script>
-  var V='25-'+Date.now().toString().slice(0,-6);   // cache-buster, bumped each deploy
+  // Progressive probe: figures start HIDDEN and are revealed only once their image
+  // actually loads, so a page that does not exist never shows as a blank box.
+  // We request only a few ahead of what has loaded, so the deck self-sizes without
+  // firing dozens of requests (and dozens of 404s) on first paint.
+  var V='26-'+Date.now().toString().slice(0,-6);   // cache-buster, bumped each deploy
+  var MAX=80, LOOKAHEAD=4, MIN_PROBE=3;
   var m=document.getElementById('deck');
-  for(var i=1;i<=60;i++){
-    var n=(i<10?'0':'')+i, f=document.createElement('figure'), a=document.createElement('a'), g=document.createElement('img');
-    g.src='slides/'+n+'.jpg?v='+V; g.alt='Page '+i; g.width=1440; g.height=810;
-    g.loading = (i<=2 ? 'eager' : 'lazy'); g.decoding='async';
-    g.dataset.tries='0';
-    g.onerror=function(){ var t=parseInt(this.dataset.tries||'0',10);
-      if(t<3){ this.dataset.tries=String(t+1); var self=this, base=this.src.split('?')[0];
-        setTimeout(function(){ self.src = base+'?r='+t+'-'+Date.now(); }, 700*(t+1)); return; }
-      var f=this.closest('figure'); if(f) f.style.display='none'; };
-    g.onload=function(){ var f=this.closest('figure'); if(f) f.style.display=''; };
-    a.href='slides/'+n+'.jpg?v='+V; a.appendChild(g); f.appendChild(a); m.appendChild(f);
+  var requested=0, missStreak=0, stopped=false;
+
+  function reveal(img){
+    var f=img.closest('figure'); if(f) f.style.display='';
+    missStreak=0;
+    grow();
   }
+  function giveUp(i){
+    var f=document.getElementById('f'+i); if(f) f.parentNode.removeChild(f);
+    missStreak++;
+    // two confirmed-missing pages in a row means we have run off the end of the deck
+    if(missStreak>=2 && requested>MIN_PROBE){ stopped=true; return; }
+    grow();
+  }
+  function grow(){
+    while(!stopped && requested<MAX && requested < highestLoaded()+LOOKAHEAD) add(++requested);
+  }
+  function highestLoaded(){
+    var figs=m.querySelectorAll('figure'); var h=0;
+    for(var k=0;k<figs.length;k++) if(figs[k].style.display==='') h=Math.max(h,+figs[k].dataset.i);
+    return h;
+  }
+  function add(i){
+    var n=(i<10?'0':'')+i;
+    var f=document.createElement('figure'); f.id='f'+i; f.dataset.i=i; f.style.display='none';
+    var a=document.createElement('a'), g=document.createElement('img');
+    a.href='slides/'+n+'.jpg?v='+V;
+    g.alt='Page '+i; g.width=1440; g.height=810; g.decoding='async'; g.dataset.tries='0';
+    g.onload=function(){ reveal(this); };
+    g.onerror=function(){
+      var t=parseInt(this.dataset.tries||'0',10);
+      if(t<3){                                  // never treat a blip as a missing page
+        this.dataset.tries=String(t+1);
+        var self=this, base=this.src.split('?')[0];
+        setTimeout(function(){ self.src=base+'?r='+t+'-'+Date.now(); }, 700*(t+1));
+        return;
+      }
+      giveUp(i);
+    };
+    g.src='slides/'+n+'.jpg?v='+V;
+    a.appendChild(g); f.appendChild(a); m.appendChild(f);
+  }
+  for(var i=0;i<LOOKAHEAD;i++) add(++requested);
 </script>
 </body>
 </html>
